@@ -13,21 +13,24 @@ if (!fs.existsSync(getConfPath())) {
   fs.mkdirSync(process.cwd() + '/conf')
 }
 
+const dav_password = process.env.DAV_PASSWORD || '123456';
+const dav_encName = process.env.DAV_ENCNAME || false;
+
 /** 全局代理alist，包括它的webdav和http服务，要配置上 */
 const alistServerTemp = {
   name: 'alist',
   path: '/*', // 默认就是代理全部，不建议修改这里
   describe: 'alist 配置',
-  serverHost: '192.168.1.100',
+  serverHost: 'alist',
   serverPort: 5244,
   https: false,
   passwdList: [
     {
-      password: '123456',
+      password: dav_password,
       describe: 'my video', // 加密内容描述
       encType: 'aesctr', // 算法类型，可选mix，rc4，默认aesctr
       enable: true, // enable encrypt
-      encName: false, // encrypt file name
+      encName: dav_encName,  // encrypt file name
       encSuffix: '', //
       encPath: ['encrypt_folder/*', '/189cloud/atest/*'], // 路径支持正则表达式，常用的就是 尾巴带*，此目录的所文件都加密
     },
@@ -38,26 +41,28 @@ const alistServerTemp = {
 const webdavServerTemp = [
   {
     id: 'abcdefg',
-    name: 'other-webdav',
-    describe: 'webdav 电影',
-    path: '/test_dav_dir/*', // 代理全部路径，需要重启后生效。不能是"/enc-api/*" ，系统已占用。如果设置 "/*"，那么上面的alist的配置就不会生效哦
-    enable: false, // 是否启动代理，需要重启后生效
-    serverHost: '192.168.1.100',
-    serverPort: 5244,
+    name: 'aliyun-webdav',
+    describe: 'aliyun webdav',
+    path: '/*', // 代理全部路径，需要重启后生效。不能是"/enc-api/*" ，系统已占用。如果设置 "/*"，那么上面的alist的配置就不会生效哦
+    enable: true, // 是否启动代理，需要重启后生效
+    serverHost: 'aliyun',
+    serverPort: 8080,
     https: false,
     passwdList: [
       {
-        password: '123456',
+        password: dav_password,
         encType: 'aesctr', // 密码类型，mix：速度更快适合电视盒子之类，rc4: 更安全，速度比mix慢一点，几乎无感知。
         describe: 'my video',
-        enable: false,
-        encName: false, // encrypt file name
+        enable: true,
+        encName: dav_encName, // encrypt file name
         encNameSuffix: '', //
-        encPath: ['encrypt_folder/*', '/dav/189cloud/*'], // 子路径
+        encPath: ['encrypt_folder/*'], // 子路径
       },
     ],
   },
 ]
+
+
 
 // inti config, fix ncc get local conf
 function getConfFilePath() {

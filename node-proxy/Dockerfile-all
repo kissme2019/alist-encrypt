@@ -1,0 +1,22 @@
+FROM node:gallium-bullseye-slim AS builder
+WORKDIR /app/node-proxy
+COPY ./ /app
+RUN pwd
+RUN npm i
+RUN npm run build
+RUN ls /app/node-proxy/dist
+
+FROM xhofe/alist:latest AS alist
+
+FROM node:gallium-alpine
+WORKDIR /root/
+VOLUME /root/data/
+VOLUME /root/conf/
+COPY --from=builder /app/node-proxy/ncc ./
+COPY --from=alist   /opt/alist/alist ./ 
+COPY node-proxy/entrypoint.sh /entrypoint.sh
+RUN apk add --no-cache bash && chmod +x /entrypoint.sh
+RUN rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 
+EXPOSE 5244
+EXPOSE 5344
+CMD [ "/entrypoint.sh" ]
