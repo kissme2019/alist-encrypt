@@ -15,6 +15,7 @@ if (!fs.existsSync(getConfPath())) {
 
 const dav_password = process.env.DAV_PASSWORD || '123456';
 const dav_encName = process.env.DAV_ENCNAME || false;
+const dav_enableOther = process.env.DAV_ENABLE_OTHER || true;
 
 /** 全局代理alist，包括它的webdav和http服务，要配置上 */
 const alistServerTemp = {
@@ -44,7 +45,7 @@ const webdavServerTemp = [
     name: 'aliyun-webdav',
     describe: 'aliyun webdav',
     path: '/*', // 代理全部路径，需要重启后生效。不能是"/enc-api/*" ，系统已占用。如果设置 "/*"，那么上面的alist的配置就不会生效哦
-    enable: true, // 是否启动代理，需要重启后生效
+    enable: dav_enableOther, // 是否启动代理，需要重启后生效
     serverHost: 'aliyun',
     serverPort: 8080,
     https: false,
