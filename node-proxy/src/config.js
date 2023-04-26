@@ -15,7 +15,7 @@ if (!fs.existsSync(getConfPath())) {
 
 const dav_password = process.env.DAV_PASSWORD || '123456';
 const dav_encName = process.env.DAV_ENCNAME ==='true'? true:false;
-const dav_enableOther = process.env.DAV_ENABLE_OTHER==='true'?true:false;
+const dav_enableOther = process.env.DAV_ENABLE_OTHER==='false'?false:true;
 
 /** 全局代理alist，包括它的webdav和http服务，要配置上 */
 const alistServerTemp = {
