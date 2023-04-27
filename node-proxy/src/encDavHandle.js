@@ -136,14 +136,6 @@ const handle = async (ctx, next) => {
     const url = request.url
     // check dir, convert url
     const fileName = path.basename(url)
-    
-    //处理文件夹请求
-    if (fileName.indexOf('.') == -1&&url.endsWith("/"))
-    {
-       await next()
-       return
-    }
-    
     const realName = convertRealName(passwdInfo.password, passwdInfo.encType, url)
     request.url = url.replace(fileName, realName)
     console.log('@@convert file name', fileName, realName)
