@@ -137,11 +137,11 @@ const handle = async (ctx, next) => {
     // check dir, convert url
     const fileName = path.basename(url)
      //处理文件夹请求
-    if (fileName.indexOf('.') == -1 && url.endsWith("/") && ~'GET'.indexOf(request.method.toLocaleUpperCase()))
-    {
-       await next()
-       return
-    }
+//     if (fileName.indexOf('.') == -1 && url.endsWith("/") && ~'GET'.indexOf(request.method.toLocaleUpperCase()))
+//     {
+//        await next()
+//        return
+//     }
     
     const realName = convertRealName(passwdInfo.password, passwdInfo.encType, url)
     request.url = url.replace(fileName, realName)
