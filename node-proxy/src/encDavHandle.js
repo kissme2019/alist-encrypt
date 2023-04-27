@@ -138,7 +138,7 @@ const handle = async (ctx, next) => {
     const fileName = path.basename(url)
     
     //处理文件夹请求
-    if (fileName.indexOf('.') == -1&&fileName.endsWith("/"))
+    if (fileName.indexOf('.') == -1&&url.endsWith("/"))
     {
        await next()
        return
