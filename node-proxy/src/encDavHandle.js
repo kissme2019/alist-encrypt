@@ -154,15 +154,15 @@ const handle = async (ctx, next) => {
         // 转换加密链接为正常名称
         let respBody = await httpClient(ctx.req, ctx.res)
         const $ = cheerio.load(respBody);
-        logger.info('@@@######################################################', url)
+        //logger.info('@@@######################################################', url)
         const links = $("a")
-        // Loop over all the anchor tags
+        // 替换所有a链接的名称和网址
         links.each((index, value) => {
             if(!$(value).text().endsWith('/')){
               var name = $(value).text()
               var file_path = $(value).attr("href")
               var showName = convertShowName(passwdInfo.password, passwdInfo.encType, file_path)
-              if(showName.indexOf('orig_')== -1){
+              if(!showName.startswith('orig_')){
                 respBody = respBody.replace(`${name}`, `${encodeURI(showName)}`)
                 respBody = respBody.replace(`${decodeURI(name)}`, `${decodeURI(showName)}`)
               }
