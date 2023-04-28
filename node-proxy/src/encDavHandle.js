@@ -154,7 +154,7 @@ const handle = async (ctx, next) => {
         // 转换加密链接为正常名称
         let respBody = await httpClient(ctx.req, ctx.res)
         const $ = cheerio.load(respBody);
-        logger.info('@@@######################################################', url)
+        //logger.info('@@@######################################################', url)
         const links = $("a")
         // 替换所有a链接的名称和网址
         links.each((index, value) => {
