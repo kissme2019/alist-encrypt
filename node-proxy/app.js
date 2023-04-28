@@ -192,6 +192,8 @@ async function proxyHandle(ctx, next) {
   await httpProxy(request, response)
 }
 
+
+
 // 初始化webdav路由，这里可以优化成动态路由，只不过没啥必要，修改配置后直接重启就好了
 webdavServer.forEach((webdavConfig) => {
   if (webdavConfig.enable) {
@@ -282,6 +284,12 @@ proxyRouter.put('/api/fs/put-back', async (ctx, next) => {
     const flowEnc = new FlowEnc(passwdInfo.password, passwdInfo.encType, request.fileSize)
     return await httpProxy(ctx.req, ctx.res, flowEnc.encryptTransform())
   }
+  return await httpProxy(ctx.req, ctx.res)
+})
+
+// 修复alist 图标不显示的问题
+proxyRouter.all(/^\/images\/*/, async (ctx, next) => {
+  delete ctx.req.headers.host
   return await httpProxy(ctx.req, ctx.res)
 })
 
