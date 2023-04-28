@@ -7,6 +7,9 @@ import path from 'path'
 import { httpClient } from './utils/httpClient.js'
 import { XMLParser } from 'fast-xml-parser'
 // import { escape } from 'querystring'
+import * as cheerio from 'cheerio';
+
+
 
 async function sleep(time) {
   return new Promise((resolve) => {
@@ -134,25 +137,57 @@ const handle = async (ctx, next) => {
   // upload file
   if (~'GET,PUT,DELETE'.indexOf(request.method.toLocaleUpperCase()) && passwdInfo && passwdInfo.encName) {
     const url = request.url
+    var is_dir=false
     // check dir, convert url
     const fileName = path.basename(url)
-     //处理文件夹请求
-//     if (fileName.indexOf('.') == -1 && url.endsWith("/") && ~'GET'.indexOf(request.method.toLocaleUpperCase()))
-//     {
-//        await next()
-//        return
-//     }
-    
     const realName = convertRealName(passwdInfo.password, passwdInfo.encType, url)
-    request.url = url.replace(fileName, realName)
-    console.log('@@convert file name', fileName, realName)
-    request.urlAddr = request.urlAddr.replace(fileName, realName)
-    // cache file before upload in next(), rclone cmd 'copy' will PROPFIND this file when the file upload success right now
-    const contentLength = request.headers['content-length'] || request.headers['x-expected-entity-length'] || 0
-    const fileDetail = { path: url, name: fileName, is_dir: false, size: contentLength }
-    logger.info('@@@put url', url)
-    // 在页面上传文件，rclone会重复上传，所以要进行缓存文件信息，也不能在next() 因为rclone copy命令会出异常
-    await cacheFileInfo(fileDetail)
+     //处理文件夹请求
+     if (fileName.indexOf('.') == -1 && url.endsWith("/") && ~'GET'.indexOf(request.method.toLocaleUpperCase()))
+     {
+        is_dir=true
+        // cache file before upload in next(), rclone cmd 'copy' will PROPFIND this file when the file upload success right now
+        const contentLength = request.headers['content-length'] || request.headers['x-expected-entity-length'] || 0
+        const fileDetail = { path: url, name: fileName, is_dir: is_dir, size: contentLength }
+        logger.info('@@@put url', url)
+        // 在页面上传文件，rclone会重复上传，所以要进行缓存文件信息，也不能在next() 因为rclone copy命令会出异常
+        await cacheFileInfo(fileDetail)
+        // 转换加密链接为正常名称
+        let respBody = await httpClient(ctx.req, ctx.res)
+        const $ = cheerio.load(respBody);
+        logger.info('@@@######################################################', url)
+        const links = $("a")
+        // Loop over all the anchor tags
+        links.each((index, value) => {
+            if(!$(value).text().endsWith('/')){
+              var name = $(value).text()
+              var file_path = $(value).attr("href")
+              var showName = convertShowName(passwdInfo.password, passwdInfo.encType, file_path)
+              if(showName.indexOf('orig_')== -1){
+                respBody = respBody.replace(`${name}`, `${encodeURI(showName)}`)
+                respBody = respBody.replace(`${decodeURI(name)}`, `${decodeURI(showName)}`)
+              }
+            }
+        })
+        if (ctx.res.statusCode === 404) {
+          ctx.res.end(respBody)
+          return
+        }
+        ctx.status = ctx.res.statusCode
+        ctx.body = respBody
+        return
+
+     }else{
+        request.url = url.replace(fileName, realName)
+        console.log('@@convert file name', fileName, realName)
+        request.urlAddr = request.urlAddr.replace(fileName, realName)
+        // cache file before upload in next(), rclone cmd 'copy' will PROPFIND this file when the file upload success right now
+        const contentLength = request.headers['content-length'] || request.headers['x-expected-entity-length'] || 0
+        const fileDetail = { path: url, name: fileName, is_dir: is_dir, size: contentLength }
+        logger.info('@@@put url', url)
+        // 在页面上传文件，rclone会重复上传，所以要进行缓存文件信息，也不能在next() 因为rclone copy命令会出异常
+        await cacheFileInfo(fileDetail)
+     }
+    
   }
   await next()
 }
