@@ -231,8 +231,8 @@ proxyRouter.all('/api/fs/get', bodyparserMw, async (ctx, next) => {
     const key = crypto.randomUUID()
     await levelDB.setExpire(key, { redirectUrl: result.data.raw_url, passwdInfo, fileSize: result.data.size }, 60 * 60 * 72) // 缓存起来，默认3天，足够下载和观看了
     result.data.raw_url = `${headers.origin}/redirect/${key}?decode=1&lastUrl=${encodeURIComponent(path)}`
-    const showName = convertShowName(passwdInfo.password, passwdInfo.encType, path)
-    result.data.name=showName
+    // const showName = convertShowName(passwdInfo.password, passwdInfo.encType, path)
+    // result.data.name=showName
   }
   ctx.body = result
 })
