@@ -68,7 +68,7 @@ const handle = async (ctx, next) => {
   const request = ctx.req
   const { passwdList } = request.webdavConfig
   const { passwdInfo } = pathFindPasswd(passwdList, decodeURIComponent(request.url))
-  if (ctx.method.toLocaleUpperCase() === 'PROPFIND') {
+  if (ctx.method.toLocaleUpperCase() === 'PROPFIND' && passwdInfo && passwdInfo.encName) {
     // check dir, convert url
     const url = request.url
     if (passwdInfo && passwdInfo.encName) {
@@ -82,8 +82,8 @@ const handle = async (ctx, next) => {
       logger.debug('@@@sourceFileInfo', sourceFileInfo, reqFileName, realName, url, sourceUrl)
       // it is file, convert file name
       if (sourceFileInfo && !sourceFileInfo.is_dir) {
-        request.url = url.replace(reqFileName, realName)
-        request.urlAddr = request.urlAddr.replace(reqFileName, realName)
+        request.url = path.dirname(request.url) + '/' + realName
+        request.urlAddr = path.dirname(request.urlAddr) + '/' + realName
       }
     }
     // decrypt file name
@@ -126,7 +126,7 @@ const handle = async (ctx, next) => {
     // logger.debug('@@respJSONData2', ctx.res.statusCode, JSON.stringify(resultBody))
 
     if (ctx.res.statusCode === 404) {
-      // fix webdav 401 bug，and fix rclone copy 501
+      // fix rclone propfind 404 ，because rclone copy will get error 501
       ctx.res.end(respBody)
       return
     }
@@ -134,15 +134,22 @@ const handle = async (ctx, next) => {
     ctx.body = respBody
     return
   }
+  if ('COPY,MOVE'.includes(request.method.toLocaleUpperCase()) && passwdInfo && passwdInfo.encName) {
+    const url = request.url
+    const realName = convertRealName(passwdInfo.password, passwdInfo.encType, url)
+    request.headers.destination = path.dirname(request.headers.destination) + '/' + encodeURI(realName)
+    request.url = path.dirname(request.url) + '/' + encodeURI(realName)
+    request.urlAddr = path.dirname(request.urlAddr) + '/' + encodeURI(realName)
+  }
   // upload file
-  if (~'GET,PUT,DELETE'.indexOf(request.method.toLocaleUpperCase()) && passwdInfo && passwdInfo.encName) {
+  if ('GET,PUT,DELETE'.includes(request.method.toLocaleUpperCase()) && passwdInfo && passwdInfo.encName) {
     const url = request.url
     var is_dir=false
     // check dir, convert url
     const fileName = path.basename(url)
     const realName = convertRealName(passwdInfo.password, passwdInfo.encType, url)
      //处理文件夹请求
-     if (fileName.indexOf('.') == -1 && url.endsWith("/") && ~'GET'.indexOf(request.method.toLocaleUpperCase()))
+     if (fileName.indexOf('.') == -1 && url.endsWith("/") && request.method.toLocaleUpperCase() === 'GET')
      {
         is_dir=true
         // cache file before upload in next(), rclone cmd 'copy' will PROPFIND this file when the file upload success right now
@@ -177,9 +184,11 @@ const handle = async (ctx, next) => {
         return
 
      }else{
-        request.url = url.replace(fileName, realName)
+        
         console.log('@@convert file name', fileName, realName)
-        request.urlAddr = request.urlAddr.replace(fileName, realName)
+        // console.log('@@convert file name', fileName, realName)
+        request.url = path.dirname(request.url) + '/' + realName
+        request.urlAddr = path.dirname(request.urlAddr) + '/' + realName
         // cache file before upload in next(), rclone cmd 'copy' will PROPFIND this file when the file upload success right now
         const contentLength = request.headers['content-length'] || request.headers['x-expected-entity-length'] || 0
         const fileDetail = { path: url, name: fileName, is_dir: is_dir, size: contentLength }
