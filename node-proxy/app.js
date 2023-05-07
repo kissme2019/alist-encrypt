@@ -99,10 +99,10 @@ function preProxy(webdavConfig, isWebdav) {
   return async (ctx, next) => {
     const { serverHost, serverPort, https } = webdavConfig
     const request = ctx.req
-    if (authorization) {
-      // 缓存起来，提高webdav的请求效率
+    if (isWebdav) {
+      // 不能把authorization缓存起来，单线程
       request.isWebdav = isWebdav
-      request.headers.authorization = request.headers.authorization ? (authorization = request.headers.authorization) : authorization
+      // request.headers.authorization = request.headers.authorization ? (authorization = request.headers.authorization) : authorization
     }
     // 原来的host保留，以后可能会用到
     request.selfHost = request.headers.host
