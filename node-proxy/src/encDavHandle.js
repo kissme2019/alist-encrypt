@@ -7,9 +7,6 @@ import path from 'path'
 import { httpClient } from './utils/httpClient.js'
 import { XMLParser } from 'fast-xml-parser'
 // import { escape } from 'querystring'
-import * as cheerio from 'cheerio';
-
-
 
 async function sleep(time) {
   return new Promise((resolve) => {
@@ -130,10 +127,12 @@ const handle = async (ctx, next) => {
       ctx.res.end(respBody)
       return
     }
+    // fix webdav 401 bug，群晖遇到401不能使用 ctx.res.end(respBody)，而rclone遇到404只能使用ctx.res.end(respBody),神奇的bug
     ctx.status = ctx.res.statusCode
     ctx.body = respBody
     return
   }
+  // copy or move file
   if ('COPY,MOVE'.includes(request.method.toLocaleUpperCase()) && passwdInfo && passwdInfo.encName) {
     const url = request.url
     const realName = convertRealName(passwdInfo.password, passwdInfo.encType, url)
@@ -141,62 +140,44 @@ const handle = async (ctx, next) => {
     request.url = path.dirname(request.url) + '/' + encodeURI(realName)
     request.urlAddr = path.dirname(request.urlAddr) + '/' + encodeURI(realName)
   }
+
   // upload file
   if ('GET,PUT,DELETE'.includes(request.method.toLocaleUpperCase()) && passwdInfo && passwdInfo.encName) {
     const url = request.url
-    var is_dir=false
     // check dir, convert url
     const fileName = path.basename(url)
     const realName = convertRealName(passwdInfo.password, passwdInfo.encType, url)
-     //处理文件夹请求
-     if (fileName.indexOf('.') == -1 && url.endsWith("/") && request.method.toLocaleUpperCase() === 'GET')
-     {
-        is_dir=true
-        // cache file before upload in next(), rclone cmd 'copy' will PROPFIND this file when the file upload success right now
-        const contentLength = request.headers['content-length'] || request.headers['x-expected-entity-length'] || 0
-        const fileDetail = { path: url, name: fileName, is_dir: is_dir, size: contentLength }
-        logger.info('@@@put url', url)
-        // 在页面上传文件，rclone会重复上传，所以要进行缓存文件信息，也不能在next() 因为rclone copy命令会出异常
-        await cacheFileInfo(fileDetail)
-        // 转换加密链接为正常名称
-        let respBody = await httpClient(ctx.req, ctx.res)
-        const $ = cheerio.load(respBody);
-        //logger.info('@@@######################################################', url)
-        const links = $("a")
-        // 替换所有a链接的名称和网址
-        links.each((index, value) => {
-            if(!$(value).text().endsWith('/')){
-              var name = $(value).text()
-              var file_path = $(value).attr("href")
-              var showName = convertShowName(passwdInfo.password, passwdInfo.encType, file_path)
-              if(!showName.startsWith('orig_')){
-                respBody = respBody.replace(`${name}`, `${encodeURI(showName)}`)
-                respBody = respBody.replace(`${decodeURI(name)}`, `${decodeURI(showName)}`)
-              }
-            }
-        })
-        if (ctx.res.statusCode === 404) {
-          ctx.res.end(respBody)
-          return
+    // maybe from aliyundrive, check this req url while get file list from enc folder
+    if (url.endsWith('/') && request.method.toLocaleUpperCase() === 'GET') {
+      let respBody = await httpClient(ctx.req, ctx.res)
+      const aurlArr = respBody.match(/href="[^"]*"/g)
+      // logger.debug('@@aurlArr', aurlArr)
+      if (aurlArr && aurlArr.length) {
+        for (let urlStr of aurlArr) {
+          urlStr = urlStr.replace('href="', '').replace('"', '')
+          const aurl = decodeURIComponent(urlStr.replace('href="', '').replace('"', ''))
+          const baseUrl = decodeURIComponent(url)
+          if (aurl.includes(baseUrl)) {
+            const fileName = path.basename(aurl)
+            const showName = convertShowName(passwdInfo.password, passwdInfo.encType, fileName)
+            logger.debug('@@aurl', urlStr, showName)
+            respBody = respBody.replace(path.basename(urlStr), encodeURI(showName)).replace(fileName, showName)
+          }
         }
-        ctx.status = ctx.res.statusCode
-        ctx.body = respBody
-        return
+      }
+      ctx.res.end(respBody)
+      return
+    }
 
-     }else{
-        
-        console.log('@@convert file name', fileName, realName)
-        // console.log('@@convert file name', fileName, realName)
-        request.url = path.dirname(request.url) + '/' + realName
-        request.urlAddr = path.dirname(request.urlAddr) + '/' + realName
-        // cache file before upload in next(), rclone cmd 'copy' will PROPFIND this file when the file upload success right now
-        const contentLength = request.headers['content-length'] || request.headers['x-expected-entity-length'] || 0
-        const fileDetail = { path: url, name: fileName, is_dir: is_dir, size: contentLength }
-        logger.info('@@@put url', url)
-        // 在页面上传文件，rclone会重复上传，所以要进行缓存文件信息，也不能在next() 因为rclone copy命令会出异常
-        await cacheFileInfo(fileDetail)
-     }
-    
+    // console.log('@@convert file name', fileName, realName)
+    request.url = path.dirname(request.url) + '/' + realName
+    request.urlAddr = path.dirname(request.urlAddr) + '/' + realName
+    // cache file before upload in next(), rclone cmd 'copy' will PROPFIND this file when the file upload success right now
+    const contentLength = request.headers['content-length'] || request.headers['x-expected-entity-length'] || 0
+    const fileDetail = { path: url, name: fileName, is_dir: false, size: contentLength }
+    logger.info('@@@put url', url)
+    // 在页面上传文件，rclone会重复上传，所以要进行缓存文件信息，也不能在next() 因为rclone copy命令会出异常
+    await cacheFileInfo(fileDetail)
   }
   await next()
 }
