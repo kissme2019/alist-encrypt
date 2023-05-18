@@ -15,6 +15,7 @@ if (!fs.existsSync(getConfPath())) {
 
 const dav_password = process.env.DAV_PASSWORD || '123456';
 const dav_encName = process.env.DAV_ENCNAME ==='true'? true:false;
+const dav_encPath = process.env.DAV_ENCNAME || 'encrypt_folder/*';
 const dav_enableOther = process.env.DAV_ENABLE_OTHER==='false'?false:true;
 
 /** 全局代理alist，包括它的webdav和http服务，要配置上 */
@@ -57,7 +58,7 @@ const webdavServerTemp = [
         enable: true,
         encName: dav_encName, // encrypt file name
         encNameSuffix: '', //
-        encPath: ['encrypt_folder/*'], // 子路径
+        encPath: dav_encPath.split(","), // 子路径
       },
     ],
   },
