@@ -159,6 +159,12 @@ async function proxyHandle(ctx, next) {
     if (filePath.indexOf('/d/') === 0) {
       filePath = filePath.replace('/d/', '/')
     }
+    //尝试修复/*目录错误 
+    if (filePath.indexOf('//') === 0) {
+      filePath = filePath.replace('//', '/')
+    }
+    
+    
     const fileInfo = await getFileInfo(filePath)
     logger.info('@@getFileInfo:', filePath, fileInfo, request.urlAddr)
     if (fileInfo) {
