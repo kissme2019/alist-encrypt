@@ -179,6 +179,20 @@ async function proxyHandle(ctx, next) {
         }
         request.fileSize = webdavFileInfo.size * 1
       }
+    }else{
+      //这里处理找不到文件信息也没有authorization但是可能通过Webdav获得信息的情况
+      //tmp-link-webdav会有这种情况 aliyundrive-webdav也可能会用
+      const authorization = ""
+      const webdavFileInfo = await getWebdavFileInfo(request.urlAddr, authorization)
+      logger.info('@@webdavFileInfo:', filePath, webdavFileInfo)
+      if (webdavFileInfo) {
+        webdavFileInfo.path = filePath
+        // 某些get请求返回的size=0，不要缓存起来
+        if (webdavFileInfo.size * 1 > 0) {
+          cacheFileInfo(webdavFileInfo)
+        }
+        request.fileSize = webdavFileInfo.size * 1
+      }
     }
     
     request.passwdInfo = passwdInfo
