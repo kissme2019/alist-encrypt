@@ -179,18 +179,6 @@ async function proxyHandle(ctx, next) {
         }
         request.fileSize = webdavFileInfo.size * 1
       }
-    }else{
-      const authorization = ""
-      const webdavFileInfo = await getWebdavFileInfo(request.urlAddr, authorization)
-      logger.info('@@webdavFileInfo:', filePath, webdavFileInfo)
-      if (webdavFileInfo) {
-        webdavFileInfo.path = filePath
-        // 某些get请求返回的size=0，不要缓存起来
-        if (webdavFileInfo.size * 1 > 0) {
-          cacheFileInfo(webdavFileInfo)
-        }
-        request.fileSize = webdavFileInfo.size * 1
-      }
     }
     
     request.passwdInfo = passwdInfo
