@@ -161,7 +161,7 @@ const handle = async (ctx, next) => {
             const fileName = path.basename(aurl)
             const showName = convertShowName(passwdInfo.password, passwdInfo.encType, fileName)
             logger.debug('@@aurl', urlStr, showName)
-            respBody = respBody.replace(path.basename(urlStr), encodeURI(showName)).replace(fileName, showName).replace("vlc://orig_orig_","vlc://").replace("iina://orig_orig_weblink","iina://weblink")
+            respBody = respBody.replace(path.basename(urlStr), encodeURI(showName)).replace(fileName, showName).replace("vlc://orig_orig_","vlc://").replace("iina://orig_orig_weblink","iina://weblink").replace("potplayer://orig_orig_","potplayer://")
           }
         }
       }
