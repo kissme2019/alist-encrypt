@@ -143,7 +143,11 @@ const handle = async (ctx, next) => {
 
   // upload file
   if ('GET,PUT,DELETE'.includes(request.method.toLocaleUpperCase()) && passwdInfo && passwdInfo.encName) {
-    const url = request.url
+    //const url = request.url
+    var url = request.url;
+    if(hasQueryParam(request.urlAddr,'sort_by')){
+      url = request.url.split("?")[0];
+    }
     // check dir, convert url
     const fileName = path.basename(url)
     const realName = convertRealName(passwdInfo.password, passwdInfo.encType, url)
@@ -181,5 +185,15 @@ const handle = async (ctx, next) => {
   }
   await next()
 }
-
+function hasQueryParam(url, paramName) {
+  var reg = new RegExp("(^|&)" + paramName + "=([^&]*)(&|$)");
+  var params = url.split("?")[1];
+  if (params) {
+    var match = params.match(reg);
+    if (match) {
+      return true;
+    }
+  }
+  return false;
+}
 export default handle
