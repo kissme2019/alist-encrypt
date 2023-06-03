@@ -25,7 +25,7 @@ jobs:
       run: sudo apt install -y nodejs 
       
     - name: Build
-      run: cd node-proxy && npm i && npm run build 
+      run: export NODE_OPTIONS=--openssl-legacy-provider && cd node-proxy && npm i && npm run build 
       
     - name: Check build
       run: ls node-proxy/dist/
