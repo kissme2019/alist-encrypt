@@ -21,9 +21,6 @@ jobs:
         persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
         fetch-depth: 0 
         
-    - name: test
-      run: ls 
-      
     - name: Nodejs Install
       run: sudo apt install -y nodejs 
       
@@ -32,6 +29,7 @@ jobs:
       
     - name: Check build
       run: ls node-proxy/dist/
+      
 #     - name: Set up Python 3.9
 #       uses: actions/setup-python@v2
 #       with:
