@@ -28,7 +28,7 @@ jobs:
       run: sudo apt install -y nodejs 
       
     - name: Build
-      run: cd node-proxy && node build 
+      run: cd node-proxy && npm run build 
       
     - name: Check build
       run: ls node-proxy/dist/
