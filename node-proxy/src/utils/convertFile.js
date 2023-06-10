@@ -93,6 +93,7 @@ export async function encryptFile(password, encType, enc, encPath, outPath, encN
   await Promise.all(promiseArr)
   console.log('@@all finish', ((Date.now() - start) / 1000).toFixed(2) + 's')
   clearInterval(interval)
+  process.exit()
 }
 
 export function convertFile() {
