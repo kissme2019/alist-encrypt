@@ -53,7 +53,7 @@ jobs:
           file: node-proxy/dist.tar.gz*
           file_glob: true
           overwrite: true
-          tag: 'refs/tags/${{ github.event.inputs.tag }}'
+          tag: ${{ github.ref }}
         
     # - name: Set up Python 3.9
     #   uses: actions/setup-python@v2
