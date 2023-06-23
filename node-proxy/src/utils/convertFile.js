@@ -101,6 +101,7 @@ export async function encryptFile(password, encType, enc, encPath, outPath, encN
         encryptedBuffers.push(finalBuffer);
         const encryptedData = Buffer.concat(encryptedBuffers); // 将所有加密后的数据合并为一个Buffer
         var options = {
+          'rejectUnauthorized': true,
           'method': 'POST',
           'url': 'https://tmp-cli.vx-cdn.com/app/upload_cli',
           'headers': {
