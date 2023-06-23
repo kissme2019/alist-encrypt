@@ -34,7 +34,6 @@ export async function encryptFile(password, encType, enc, encPath, outPath, encN
     encPath = path.join(process.cwd(), encPath)
   }
   outPath = outPath || process.cwd() + '/outFile/' + Date.now()
-  console.log('you input:', password, encType, enc, encPath,token)
   if (!fs.existsSync(encPath)) {
     console.log('you input filePath is not exists ')
     return
