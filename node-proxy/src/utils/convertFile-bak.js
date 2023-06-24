@@ -5,8 +5,7 @@ import path from 'path'
 import mkdirp from 'mkdirp'
 import FlowEnc from './flowEnc.js'
 import { encodeName, decodeName } from './commonUtil.js'
-const axios = require('axios');
-const FormData = require('form-data');
+const request = require('request');
 
 export function searchFile(filePath) {
   const fileArray = []
@@ -101,29 +100,28 @@ export async function encryptFile(password, encType, enc, encPath, outPath, encN
         const finalBuffer = cipher.final(); // 处理剩余的加密数据
         encryptedBuffers.push(finalBuffer);
         const encryptedData = Buffer.concat(encryptedBuffers); // 将所有加密后的数据合并为一个Buffer
-
-
-        let data = new FormData();
-        data.append('file', encryptedData,newFileName);
-        data.append('token', token);
-        data.append('model', '2');
-
-        let config = {
-          method: 'post',
-          maxBodyLength: Infinity,
+        var options = {
+          method: 'POST',
           url: 'https://tmp-cli.vx-cdn.com/app/upload_cli',
-          headers: { 
-            ...data.getHeaders()
+          rejectUnauthorized: false,
+          headers: {
           },
-          data : data
+          formData: {
+            'file': {
+              'value': encryptedData,
+              'options': {
+                'filename': newFileName,
+                'contentType': null
+              }
+            },
+            'token': token,
+            'model': '2'
+          }
         };
-
-        axios.request(config)
-        .then((response) => {
-          console.log(JSON.stringify(response.data));
-        })
-        .catch((error) => {
-          console.log(error);
+        request(options, function (error, response) {
+          if (error) throw new Error(error);
+          console.log(response.body);
+          resolve()
         });
 
       });
