@@ -14,7 +14,7 @@ VOLUME /root/data/
 VOLUME /root/conf/
 COPY --from=builder /app/node-proxy/ncc ./
 COPY --from=alist   /opt/alist/alist ./ 
-COPY /node-proxy/entrypoint.sh /entrypoint.sh
+COPY node-proxy/entrypoint.sh /entrypoint.sh
 RUN apk add --no-cache bash && chmod +x /entrypoint.sh
 RUN rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 
 EXPOSE 5244
