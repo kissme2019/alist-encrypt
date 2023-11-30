@@ -33,19 +33,19 @@ jobs:
     
       
     - name: Check build
-      run: ls alist-encrypt/node-proxy/dist/
+      run: ls alist-encrypt/node-proxy/build/
     
     - name: Upload binary artifacts
       uses: actions/upload-artifact@v2
       with:
         name: alist-encrypt
-        path: alist-encrypt/node-proxy/dist/
+        path: alist-encrypt/node-proxy/build/
         if-no-files-found: error
         
     - name: Archive binary
       run: |
           cd alist-encrypt/node-proxy
-          tar czvf dist.tar.gz dist
+          tar czvf dist.tar.gz build
           shasum -a 256 dist.tar.gz > dist.tar.gz.sha256
           cd -
     - name: Upload binary to GitHub Release
