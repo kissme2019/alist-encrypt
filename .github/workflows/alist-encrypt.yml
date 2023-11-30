@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release'
+        required: true
+        default: '0.0.2'
+env:
+  FILE_PATH: 'downloads'
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.repository.owner.id == github.event.sender.id
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+        fetch-depth: 0 
+        
+    - name: Nodejs Install
+      run: sudo apt install -y nodejs 
+      
+    - name: Get Source Code
+      run: git clone https://github.com/traceless/alist-encrypt
+      
+    - name: Build
+      run:  export NODE_OPTIONS=--openssl-legacy-provider && cd alist-encrypt/node-proxy && npm i && npm run build 
+
+    
+      
+    - name: Check build
+      run: ls alist-encrypt/node-proxy/dist/
+    
+    - name: Upload binary artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: alist-encrypt
+        path: alist-encrypt/node-proxy/dist/
+        if-no-files-found: error
+        
+    - name: Archive binary
+      run: |
+          cd alist-encrypt/node-proxy
+          tar czvf dist.tar.gz dist
+          shasum -a 256 dist.tar.gz > dist.tar.gz.sha256
+          cd -
+    - name: Upload binary to GitHub Release
+      uses: svenstaro/upload-release-action@v2
+      with:
+          repo_token: ${{ secrets.RELEASE_TOKEN }}
+          file: alist-encrypt/node-proxy/dist.tar.gz*
+          file_glob: true
+          overwrite: true
+          tag: 'refs/tags/${{ github.event.inputs.tag }}'
+        
+#     - name: Set up Python 3.9
+#       uses: actions/setup-python@v2
+#       with:
+#         python-version: 3.9
+        
+      
