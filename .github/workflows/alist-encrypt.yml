@@ -1,4 +1,4 @@
-name: Build
+name: 编译原版代码
 
 on:
   repository_dispatch:
